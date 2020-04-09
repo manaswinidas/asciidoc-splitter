@@ -58,10 +58,12 @@ public class Assembly {
         List<SectionWrapper> moduleSources = new ArrayList<>();
 
         var modules = doc.getBlocks().stream()
-                                        .filter(Section.class::isInstance)
-                                        .filter(node -> node.getAttributes().containsKey(MODULE_TYPE_ATTRIBUTE))
-                                        .map(Section.class::cast)
-                                        .collect(Collectors.toList());
+                                       .filter(Section.class::isInstance) 
+                                       .filter(node -> node.getAttributes().containsKey(MODULE_TYPE_ATTRIBUTE) 
+                                            || (node.getId() != null && node.getId().endsWith("{context}"))) 
+                                       .map(Section.class::cast) 
+                                       .collect(Collectors.toList());
+    
 
         var modulesItr = modules.listIterator();
         while (modulesItr.hasNext()) {
