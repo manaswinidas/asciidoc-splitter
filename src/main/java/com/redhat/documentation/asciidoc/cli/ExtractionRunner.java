@@ -1,5 +1,9 @@
 package com.redhat.documentation.asciidoc.cli;
 
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Optional;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -36,6 +40,15 @@ import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.TextProgressMonitor;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 @Command(name = "extract", mixinStandardHelpOptions = true, version = "1.0", description = "Create a modular documentation layout from a directory of asciidoc files.")
 public class ExtractionRunner implements Callable<Integer> {
@@ -92,8 +105,10 @@ public class ExtractionRunner implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() {
-        var config = new Configuration(this.inputOptions.inputDir, this.outputOptions.outputDir);
+    public Integer call() throws IOException, GitAPIException, InvalidRemoteException, TransportException{
+        var config = new Configuration(this.inputOptions.gitInputOptions.sourceRepo, this.inputOptions.gitInputOptions.sourceBranch,this.outputOptions.outputDir);
+        Git git = Git.cloneRepository().setURI(config.getSourceRepo()).setDirectory(config.getSourceDirectory())
+                .setBranchesToClone(Arrays.asList("refs/heads/"+config.getSourceBranch())).setNoCheckout(true).call();
         var preprocessor = new ReaderPreprocessor();
 
         OptionsBuilder optionsBuilder = OptionsBuilder.options();
